@@ -85,7 +85,67 @@ ${transcricao}`;
     const clean = raw.replace(/```json|```/g, '').trim();
     const parsed = JSON.parse(clean);
 
-    console.log('LEAD:', { nome, email, empresaLead, cargo, empresa, segmento, ticket, tipo, ts: new Date().toISOString() });
+    // Envio de e-mail via Resend
+    try {
+      const scoreGeral = parsed.score_geral || '—';
+      const classif = parsed.classificacao_call || '—';
+      const erros = (parsed.erros_criticos || []).map((e, i) => {
+        const titulo = typeof e === 'object' ? e.titulo : e;
+        const impacto = typeof e === 'object' ? e.impacto : 'Alto';
+        return `<li><strong>#${i+1} ${titulo}</strong> [${impacto}]</li>`;
+      }).join('');
+      const bantStatus = Object.entries(parsed.bant_score || {}).map(([k, v]) => 
+        `<li><strong>${k.toUpperCase()}:</strong> ${v.coberto ? '✓ Coberto' : '✗ Ausente'} — ${v.analise||''}</li>`
+      ).join('');
+
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${process.env.RESEND_API_KEY}`
+        },
+        body: JSON.stringify({
+          from: 'noreply@scaleco.ai',
+          to: 'fabio@scaleco.ai',
+          subject: `📞 Call Diagnosis™ — ${empresaLead || empresa || 'Lead'} · Score ${scoreGeral}/10`,
+          html: `
+            <h2>Novo diagnóstico — Call Diagnosis™</h2>
+            <h3>Lead</h3>
+            <ul>
+              <li><strong>Nome:</strong> ${nome}</li>
+              <li><strong>E-mail:</strong> ${email}</li>
+              <li><strong>Empresa:</strong> ${empresaLead}</li>
+              <li><strong>Cargo:</strong> ${cargo||'—'}</li>
+            </ul>
+            <h3>Call analisada</h3>
+            <ul>
+              <li><strong>Empresa:</strong> ${empresa||'—'}</li>
+              <li><strong>Segmento:</strong> ${segmento||'—'}</li>
+              <li><strong>Ticket:</strong> ${ticket||'—'}</li>
+              <li><strong>Tipo:</strong> ${tipo||'—'}</li>
+            </ul>
+            <h3>Resultado</h3>
+            <ul>
+              <li><strong>Score geral:</strong> ${scoreGeral}/10</li>
+              <li><strong>Classificação:</strong> ${classif}</li>
+              <li><strong>Insight:</strong> ${parsed.insight_final||'—'}</li>
+            </ul>
+            <h3>Erros críticos</h3>
+            <ul>${erros||'<li>Nenhum</li>'}</ul>
+            <h3>BANT</h3>
+            <ul>${bantStatus}</ul>
+            <h3>Próxima ação</h3>
+            <p>${parsed.proxima_melhor_acao||'—'}</p>
+            <h3>Diagnóstico estrutural</h3>
+            <p>${parsed.diagnostico_estrutural||'—'}</p>
+            <hr>
+            <p style="color:#888;font-size:12px">Call Diagnosis™ · ScaleCo · ${new Date().toLocaleString('pt-BR')}</p>
+          `
+        })
+      });
+    } catch (emailErr) {
+      console.error('Resend error:', emailErr.message);
+    }
 
     return {
       statusCode: 200,
