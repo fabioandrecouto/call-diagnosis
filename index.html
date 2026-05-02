@@ -592,13 +592,21 @@ footer {
 <div id="cockpit" style="display:none">
   <div class="cockpit-inner">
 
-    <!-- FORM -->
-    <div id="cockpitForm">
+    <!-- STEP 1 — IDENTIFICAÇÃO -->
+    <div id="cockpitStep1">
       <div class="cockpit-header">
-        <div class="cockpit-title">CALL DIAGNOSIS™</div>
-        <div class="cockpit-sub">by ScaleCo</div>
+        <div>
+          <div class="cockpit-title">CALL DIAGNOSIS™</div>
+          <div class="cockpit-sub">by ScaleCo</div>
+        </div>
         <button class="cockpit-close" onclick="closeCockpit()">✕</button>
       </div>
+      <div class="step-indicator">
+        <div class="step-dot active"></div>
+        <div class="step-line"></div>
+        <div class="step-dot"></div>
+      </div>
+      <div class="step-label">Passo 1 de 2 — Identificação</div>
 
       <div class="cform-row">
         <div class="cform-group">
@@ -620,8 +628,36 @@ footer {
           <input type="text" id="gCargo" placeholder="CEO, Head de Vendas...">
         </div>
       </div>
+      <div class="cform-group">
+        <label>Faturamento anual</label>
+        <select id="faturamento">
+          <option value="">Selecione uma faixa</option>
+          <option value="Abaixo de R$1M">Abaixo de R$1M</option>
+          <option value="R$1M a R$5M">R$1M a R$5M</option>
+          <option value="R$5M a R$20M">R$5M a R$20M</option>
+          <option value="Acima de R$20M">Acima de R$20M</option>
+        </select>
+      </div>
 
-      <div class="cform-divider">dados da call</div>
+      <button class="btn-main" style="margin-top:8px" onclick="goToStep2()">CONTINUAR →</button>
+      <div class="cerror-box" id="errorStep1"></div>
+    </div>
+
+    <!-- STEP 2 — CALL -->
+    <div id="cockpitStep2" style="display:none">
+      <div class="cockpit-header">
+        <div>
+          <div class="cockpit-title">CALL DIAGNOSIS™</div>
+          <div class="cockpit-sub">by ScaleCo</div>
+        </div>
+        <button class="cockpit-close" onclick="closeCockpit()">✕</button>
+      </div>
+      <div class="step-indicator">
+        <div class="step-dot done"></div>
+        <div class="step-line active"></div>
+        <div class="step-dot active"></div>
+      </div>
+      <div class="step-label">Passo 2 de 2 — Dados da call</div>
 
       <div class="cform-row">
         <div class="cform-group">
@@ -647,14 +683,15 @@ footer {
           </select>
         </div>
       </div>
-      <div class="cform-group">
+      <div class="cform-group" style="margin-top:4px">
         <label>Transcrição da call</label>
-        <textarea id="transcricao" placeholder="Cole aqui a transcrição completa da call..."></textarea>
+        <textarea id="transcricao" placeholder="Cole aqui a transcrição completa da call..." style="min-height:180px"></textarea>
       </div>
 
-      <button class="btn-main" style="margin-top:8px" onclick="runAnalysis()">
-        GERAR DIAGNÓSTICO →
-      </button>
+      <div style="display:flex;gap:10px;margin-top:8px;align-items:center">
+        <button class="btn-ghost" onclick="goToStep1()">← Voltar</button>
+        <button class="btn-main" style="flex:1;margin-top:0" onclick="runAnalysis()">GERAR DIAGNÓSTICO →</button>
+      </div>
       <div class="cerror-box" id="errorBox"></div>
     </div>
 
@@ -691,6 +728,28 @@ footer {
 <style>
 /* NAV CTA também abre cockpit */
 .nav-cta-btn { cursor:pointer; }
+
+/* STEP INDICATOR */
+.step-indicator {
+  display: flex; align-items: center; gap: 0;
+  margin-bottom: 8px;
+}
+.step-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border-h); flex-shrink: 0;
+  transition: background .2s;
+}
+.step-dot.active { background: var(--blue); }
+.step-dot.done { background: #3ddc84; }
+.step-line {
+  flex: 1; height: 1px; background: var(--border);
+  transition: background .2s;
+}
+.step-line.active { background: var(--blue); }
+.step-label {
+  font-size: 10px; font-family: var(--ff-mono); color: var(--text-3);
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: 20px;
+}
 
 /* COCKPIT */
 #cockpit {
@@ -878,13 +937,32 @@ document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 function openCockpit() {
   document.getElementById('cockpit').style.display = 'block';
   document.body.style.overflow = 'hidden';
-  document.getElementById('cockpitForm').style.display = 'block';
+  document.getElementById('cockpitStep1').style.display = 'block';
+  document.getElementById('cockpitStep2').style.display = 'none';
   document.getElementById('cockpitLoading').style.display = 'none';
   document.getElementById('cockpitResult').style.display = 'none';
 }
 function closeCockpit() {
   document.getElementById('cockpit').style.display = 'none';
   document.body.style.overflow = '';
+}
+function goToStep2() {
+  const nome = document.getElementById('gNome').value.trim();
+  const email = document.getElementById('gEmail').value.trim();
+  const empresaLead = document.getElementById('gEmpresaLead').value.trim();
+  const errEl = document.getElementById('errorStep1');
+  if (!nome) { errEl.textContent='Informe seu nome.'; errEl.classList.add('visible'); return; }
+  if (!email || !email.includes('@')) { errEl.textContent='Informe um e-mail válido.'; errEl.classList.add('visible'); return; }
+  if (!empresaLead) { errEl.textContent='Informe o nome da sua empresa.'; errEl.classList.add('visible'); return; }
+  errEl.classList.remove('visible');
+  document.getElementById('cockpitStep1').style.display = 'none';
+  document.getElementById('cockpitStep2').style.display = 'block';
+  document.getElementById('cockpit').scrollTop = 0;
+}
+function goToStep1() {
+  document.getElementById('cockpitStep2').style.display = 'none';
+  document.getElementById('cockpitStep1').style.display = 'block';
+  document.getElementById('cockpit').scrollTop = 0;
 }
 // Também abre pelo nav
 document.querySelector('.nav-cta').onclick = function(e) { e.preventDefault(); openCockpit(); };
@@ -895,7 +973,7 @@ let loadingInterval;
 function showError(msg) { const b=document.getElementById('errorBox'); b.textContent=msg; b.classList.add('visible'); }
 function hideError() { document.getElementById('errorBox').classList.remove('visible'); }
 function startLoading() {
-  document.getElementById('cockpitForm').style.display='none';
+  document.getElementById('cockpitStep2').style.display='none';
   document.getElementById('cockpitLoading').style.display='block';
   let i=0; document.getElementById('loadingMsg').textContent=loadingMsgs[0];
   loadingInterval=setInterval(()=>{ i=(i+1)%loadingMsgs.length; document.getElementById('loadingMsg').textContent=loadingMsgs[i]; },2000);
@@ -903,8 +981,10 @@ function startLoading() {
 function stopLoading() { clearInterval(loadingInterval); document.getElementById('cockpitLoading').style.display='none'; }
 function resetForm() {
   document.getElementById('cockpitResult').style.display='none';
-  document.getElementById('cockpitForm').style.display='block';
-  hideError();
+  document.getElementById('cockpitStep1').style.display='block';
+  document.getElementById('cockpitStep2').style.display='none';
+  document.getElementById('errorStep1').classList.remove('visible');
+  document.getElementById('errorBox').classList.remove('visible');
 }
 function barColor(n) { return n<=3?'var(--red)':n<=6?'#f5a623':'#3ddc84'; }
 function scoreGlow(n) { return n<=3?'rgba(224,60,60,.2)':n<=6?'rgba(245,166,35,.2)':'rgba(61,220,132,.2)'; }
@@ -1076,6 +1156,7 @@ async function runAnalysis() {
       body:JSON.stringify({
         nome,email,empresaLead,
         cargo:document.getElementById('gCargo').value.trim(),
+        faturamento:document.getElementById('faturamento').value,
         empresa:document.getElementById('empresa').value.trim(),
         segmento:document.getElementById('segmento').value.trim(),
         ticket:document.getElementById('ticket').value.trim(),
@@ -1089,7 +1170,7 @@ async function runAnalysis() {
     renderResult(data);
   } catch(e) {
     stopLoading();
-    document.getElementById('cockpitForm').style.display='block';
+    document.getElementById('cockpitStep2').style.display='block';
     showError('Erro na análise: '+e.message);
   }
 }
