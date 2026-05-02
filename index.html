@@ -581,13 +581,107 @@ footer {
 </section>
 
 <!-- CTA FINAL -->
-<section class="cta-final reveal" id="analisar">
+<section class="cta-final reveal">
   <div class="cta-final-label">Próximo passo</div>
   <h2 class="cta-final-title">Ver o diagnóstico da minha operação.</h2>
   <p class="cta-final-sub">Se você parar 30 dias, sua receita desacelera. Essa call vai te mostrar por quê.</p>
-  <a class="btn-main" href="/diagnostico">ANALISAR UMA CALL DO MEU TIME →</a>
+  <button class="btn-main" onclick="openCockpit()">ANALISAR UMA CALL DO MEU TIME →</button>
   <div class="cta-final-note">Baseado no Scale Method™ · ScaleCo · Revenue Architecture™</div>
 </section>
+
+<!-- COCKPIT OVERLAY -->
+<div id="cockpit" style="display:none">
+  <div class="cockpit-inner">
+
+    <!-- FORM -->
+    <div id="cockpitForm">
+      <div class="cockpit-header">
+        <div class="cockpit-title">CALL DIAGNOSIS™</div>
+        <div class="cockpit-sub">by ScaleCo</div>
+        <button class="cockpit-close" onclick="closeCockpit()">✕</button>
+      </div>
+
+      <div class="cform-row">
+        <div class="cform-group">
+          <label>Seu nome</label>
+          <input type="text" id="gNome" placeholder="João Silva">
+        </div>
+        <div class="cform-group">
+          <label>E-mail</label>
+          <input type="email" id="gEmail" placeholder="joao@empresa.com.br">
+        </div>
+      </div>
+      <div class="cform-row">
+        <div class="cform-group">
+          <label>Sua empresa</label>
+          <input type="text" id="gEmpresaLead" placeholder="Nome da empresa">
+        </div>
+        <div class="cform-group">
+          <label>Cargo</label>
+          <input type="text" id="gCargo" placeholder="CEO, Head de Vendas...">
+        </div>
+      </div>
+
+      <div class="cform-divider">dados da call</div>
+
+      <div class="cform-row">
+        <div class="cform-group">
+          <label>Empresa analisada</label>
+          <input type="text" id="empresa" placeholder="Ex: Alfaterm">
+        </div>
+        <div class="cform-group">
+          <label>Segmento</label>
+          <input type="text" id="segmento" placeholder="Ex: Manufatura B2B">
+        </div>
+      </div>
+      <div class="cform-row">
+        <div class="cform-group">
+          <label>Ticket médio</label>
+          <input type="text" id="ticket" placeholder="Ex: R$ 70k/ano">
+        </div>
+        <div class="cform-group">
+          <label>Tipo de call</label>
+          <select id="tipo">
+            <option value="discovery">Discovery</option>
+            <option value="prospeccao">Prospecção</option>
+            <option value="fechamento">Fechamento</option>
+          </select>
+        </div>
+      </div>
+      <div class="cform-group">
+        <label>Transcrição da call</label>
+        <textarea id="transcricao" placeholder="Cole aqui a transcrição completa da call..."></textarea>
+      </div>
+
+      <button class="btn-main" style="margin-top:8px" onclick="runAnalysis()">
+        GERAR DIAGNÓSTICO →
+      </button>
+      <div class="cerror-box" id="errorBox"></div>
+    </div>
+
+    <!-- LOADING -->
+    <div id="cockpitLoading" style="display:none">
+      <div class="cloading-ring"></div>
+      <div class="cloading-title">PROCESSANDO</div>
+      <div class="cloading-msg" id="loadingMsg">Aplicando framework SCALE...</div>
+    </div>
+
+    <!-- RESULT -->
+    <div id="cockpitResult" style="display:none">
+      <div class="cockpit-header">
+        <div class="cockpit-title">CALL DIAGNOSIS™</div>
+        <div class="cockpit-sub">by ScaleCo</div>
+        <button class="cockpit-close" onclick="closeCockpit()">✕</button>
+      </div>
+      <div id="resultContent"></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding-top:20px;border-top:1px solid var(--border);margin-top:20px;">
+        <span style="font-size:10px;color:var(--text-3);font-family:var(--ff-mono)" id="footerTs">Call Diagnosis™ · by ScaleCo</span>
+        <button class="btn-ghost" onclick="resetForm()">← Nova análise</button>
+      </div>
+    </div>
+
+  </div>
+</div>
 
 <!-- FOOTER -->
 <footer>
@@ -595,12 +689,411 @@ footer {
   <div class="footer-right">Scale Method™ · SDR · scaleco.ai</div>
 </footer>
 
+<style>
+/* NAV CTA também abre cockpit */
+.nav-cta-btn { cursor:pointer; }
+
+/* COCKPIT */
+#cockpit {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.88);
+  backdrop-filter: blur(8px);
+  overflow-y: auto;
+  padding: 40px 20px;
+  animation: fadeIn .2s ease;
+}
+@keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+.cockpit-inner {
+  max-width: 780px; margin: 0 auto;
+  background: var(--bg-2); border: 1px solid var(--border);
+  border-radius: 12px; padding: 36px;
+  position: relative;
+}
+.cockpit-header {
+  display: flex; align-items: baseline; gap: 12px;
+  margin-bottom: 28px; padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.cockpit-title { font-family: var(--ff-head); font-size: 22px; letter-spacing: .04em; }
+.cockpit-sub { font-size: 11px; color: rgba(255,255,255,0.25); font-family: var(--ff-mono); }
+.cockpit-close {
+  margin-left: auto; background: none; border: 1px solid var(--border);
+  color: var(--text-2); border-radius: 4px; width: 32px; height: 32px;
+  cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center;
+  transition: border-color .15s;
+}
+.cockpit-close:hover { border-color: var(--border-h); color: var(--text); }
+
+.cform-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+.cform-group { display: flex; flex-direction: column; }
+.cform-group label {
+  font-size: 10px; font-family: var(--ff-mono); color: var(--text-3);
+  letter-spacing: .08em; text-transform: uppercase; margin-bottom: 5px;
+}
+.cform-group input, .cform-group select, .cform-group textarea {
+  background: var(--bg-3); border: 1px solid var(--border); border-radius: 6px;
+  color: var(--text); font-family: var(--ff-body); font-size: 14px; outline: none;
+  transition: border-color .15s;
+}
+.cform-group input, .cform-group select { height: 40px; padding: 0 12px; }
+.cform-group textarea { padding: 12px; resize: vertical; min-height: 140px; line-height: 1.6; }
+.cform-group input:focus, .cform-group select:focus, .cform-group textarea:focus {
+  border-color: var(--blue); box-shadow: 0 0 0 3px var(--blue-dim);
+}
+.cform-group input::placeholder, .cform-group textarea::placeholder { color: var(--text-3); }
+.cform-group select option { background: #1a1a1a; }
+.cform-divider {
+  display: flex; align-items: center; gap: 12px;
+  font-size: 10px; color: var(--text-3); letter-spacing: .1em;
+  text-transform: uppercase; font-family: var(--ff-mono); margin: 16px 0 12px;
+}
+.cform-divider::before, .cform-divider::after { content:''; flex:1; height:1px; background:var(--border); }
+.cerror-box {
+  display: none; padding: 10px 14px; margin-top: 10px;
+  background: rgba(224,60,60,0.1); border: 1px solid rgba(224,60,60,.2);
+  border-radius: 6px; color: var(--red); font-size: 12px;
+}
+.cerror-box.visible { display: block; }
+.btn-ghost {
+  background: transparent; border: 1px solid var(--border); color: var(--text-2);
+  border-radius: 6px; padding: 8px 16px; font-family: var(--ff-body); font-size: 13px;
+  cursor: pointer; transition: border-color .15s, color .15s;
+}
+.btn-ghost:hover { border-color: var(--border-h); color: var(--text); }
+
+/* LOADING */
+#cockpitLoading { text-align: center; padding: 60px 20px; }
+.cloading-ring {
+  width: 40px; height: 40px; margin: 0 auto 20px;
+  border: 2px solid var(--border); border-top-color: var(--blue);
+  border-radius: 50%; animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.cloading-title { font-family: var(--ff-head); font-size: 20px; letter-spacing: .04em; margin-bottom: 8px; }
+.cloading-msg { font-size: 12px; color: var(--text-2); font-family: var(--ff-mono); }
+
+/* RESULT CARDS */
+.ctx-exec { display:grid;grid-template-columns:1fr 1fr;margin-bottom:12px;background:var(--bg-3);border:1px solid var(--border);border-radius:8px;overflow:hidden; }
+.ctx-col { padding:12px 14px; }
+.ctx-col+.ctx-col { border-left:1px solid var(--border); }
+.ctx-col-label { font-size:8px;font-family:var(--ff-mono);color:var(--text-3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px; }
+.ctx-deal-title { font-family:var(--ff-head);font-size:15px;letter-spacing:.04em;color:var(--text);margin-bottom:2px; }
+.ctx-deal-sub { font-size:11px;color:var(--text-2); }
+.ctx-meta-row { display:flex;flex-direction:column;gap:3px; }
+.ctx-meta-item { font-size:11px;color:var(--text-2); }
+.ctx-meta-item strong { color:var(--text); }
+.ctx-status { margin-top:8px;padding:7px 10px;border-radius:5px;background:rgba(224,60,60,0.08);border:1px solid rgba(224,60,60,.18);font-size:11px;color:var(--red);font-family:var(--ff-mono); }
+.ctx-status-label { font-size:8px;letter-spacing:.08em;text-transform:uppercase;color:rgba(224,60,60,.5);margin-bottom:2px; }
+.row-top { display:grid;grid-template-columns:160px 1fr;gap:10px;margin-bottom:10px; }
+.score-card { background:var(--bg-3);border:1px solid var(--border);border-radius:10px;padding:14px 10px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden; }
+.score-card::before { content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 110%,var(--score-glow,rgba(45,91,227,.2)) 0%,transparent 70%);pointer-events:none; }
+.score-lbl { font-size:8px;font-family:var(--ff-mono);color:var(--text-3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px; }
+.gauge-wrap { position:relative;width:72px;height:72px;margin-bottom:8px; }
+.gauge-wrap svg { width:100%;height:100%; }
+.gauge-num { position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center; }
+.sn-big { font-family:var(--ff-head);font-size:28px;line-height:1;color:var(--text); }
+.sn-den { font-size:9px;color:var(--text-3);font-family:var(--ff-mono); }
+.classif-pill { padding:3px 10px;border-radius:100px;font-size:9px;font-family:var(--ff-mono);font-weight:600;letter-spacing:.06em;margin-bottom:6px; }
+.classif-avancou { background:rgba(61,220,132,.08);color:#3ddc84;border:1px solid rgba(61,220,132,.2); }
+.classif-neutra { background:rgba(245,166,35,.08);color:#f5a623;border:1px solid rgba(245,166,35,.2); }
+.classif-piorou { background:rgba(224,60,60,.08);color:var(--red);border:1px solid rgba(224,60,60,.2); }
+.score-risco { font-size:9px;font-family:var(--ff-mono);color:var(--red);background:rgba(224,60,60,.08);border:1px solid rgba(224,60,60,.18);padding:2px 7px;border-radius:4px;text-align:center; }
+.insight-card-r { background:var(--bg-3);border:1px solid var(--border);border-radius:10px;padding:18px;display:flex;flex-direction:column;justify-content:center; }
+.ins-tag-r { font-size:8px;font-family:var(--ff-mono);color:var(--text-3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px; }
+.ins-text-r { font-size:14px;font-style:italic;color:var(--text);line-height:1.6;border-left:2px solid var(--blue);padding-left:12px; }
+.row-mid { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px; }
+.sec-card { background:var(--bg-3);border:1px solid var(--border);border-radius:10px;padding:14px; }
+.sec-lbl { font-size:8px;font-family:var(--ff-mono);color:var(--text-3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border); }
+.radar-wrap-r { width:140px;height:140px;margin:0 auto 10px; }
+.radar-wrap-r svg { width:100%;height:100%; }
+.s-bars { display:flex;flex-direction:column;gap:4px; }
+.s-row { display:flex;align-items:center;gap:6px; }
+.s-key { font-size:9px;font-family:var(--ff-mono);color:var(--text-3);width:72px;flex-shrink:0; }
+.s-track { flex:1;height:2px;background:rgba(255,255,255,.05);border-radius:2px; }
+.s-fill { height:100%;border-radius:2px; }
+.s-nota { font-size:10px;font-family:var(--ff-mono);color:var(--text);width:16px;text-align:right;flex-shrink:0; }
+.bant-grid { display:grid;grid-template-columns:1fr 1fr;gap:6px; }
+.bant-b { padding:9px;border-radius:7px;border:1px solid var(--border); }
+.bant-ok { background:rgba(61,220,132,.03);border-color:rgba(61,220,132,.18); }
+.bant-no { background:rgba(224,60,60,.03);border-color:rgba(224,60,60,.18); }
+.bant-big { font-family:var(--ff-head);font-size:20px;line-height:1;margin-bottom:2px; }
+.bant-ok .bant-big { color:#3ddc84; }
+.bant-no .bant-big { color:var(--red); }
+.bant-name { font-size:9px;font-family:var(--ff-mono);color:var(--text-3);margin-bottom:2px; }
+.bant-st { font-size:9px;font-family:var(--ff-mono);font-weight:600;letter-spacing:.04em; }
+.bant-ok .bant-st { color:#3ddc84; }
+.bant-no .bant-st { color:var(--red); }
+.bant-desc { font-size:10px;color:var(--text-2);line-height:1.4;margin-top:4px; }
+.bant-impact { font-size:9px;font-family:var(--ff-mono);color:var(--red);margin-top:4px;padding-top:4px;border-top:1px solid rgba(224,60,60,.12); }
+.bant-impact-label { color:rgba(224,60,60,.4);margin-right:3px; }
+.row-act { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px; }
+.erros-list { display:flex;flex-direction:column;gap:6px; }
+.erro-item { padding:9px 11px;border-radius:7px;background:rgba(224,60,60,.06);border:1px solid rgba(224,60,60,.12); }
+.erro-hdr { display:flex;align-items:center;gap:6px;margin-bottom:3px; }
+.erro-rank { font-family:var(--ff-head);font-size:15px;color:var(--red);opacity:.35;width:16px;flex-shrink:0; }
+.erro-titulo { font-size:11px;font-weight:500;color:var(--text);flex:1; }
+.imp-badge { font-size:8px;font-family:var(--ff-mono);padding:2px 6px;border-radius:3px;font-weight:600;letter-spacing:.06em; }
+.imp-alto { background:rgba(224,60,60,.18);color:var(--red); }
+.imp-med { background:rgba(245,166,35,.1);color:#f5a623; }
+.imp-baixo { background:rgba(255,255,255,.05);color:var(--text-3); }
+.erro-det { font-size:10px;color:var(--text-2);line-height:1.4;padding-left:22px;margin-bottom:3px; }
+.erro-conseq { font-size:9px;font-family:var(--ff-mono);color:#f5a623;padding-left:22px; }
+.erro-conseq-label { color:rgba(245,166,35,.4);margin-right:3px; }
+.pna-card { background:var(--blue);border-radius:10px;padding:18px;display:flex;flex-direction:column; }
+.pna-urgencia { font-size:11px;color:rgba(255,255,255,.55);font-style:italic;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.12); }
+.pna-tag { font-size:8px;font-family:var(--ff-mono);color:rgba(255,255,255,.45);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px; }
+.pna-title { font-family:var(--ff-head);font-size:17px;letter-spacing:.04em;color:#fff;margin-bottom:8px; }
+.pna-txt { font-size:12px;color:rgba(255,255,255,.82);line-height:1.7;flex:1; }
+.pna-dead { margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,.12);font-size:9px;color:rgba(255,255,255,.35);font-family:var(--ff-mono); }
+.row-sup { display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px; }
+.list-items { display:flex;flex-direction:column;gap:4px; }
+.list-item { display:flex;align-items:flex-start;gap:6px;padding:7px 9px;border-radius:6px;background:rgba(255,255,255,.02);border:1px solid var(--border);font-size:11px;color:var(--text-2);line-height:1.4; }
+.list-dot { width:4px;height:4px;border-radius:50%;flex-shrink:0;margin-top:4px; }
+.dot-g { background:#3ddc84; }
+.dot-b { background:var(--blue); }
+.diag-card { background:var(--bg-3);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:10px; }
+.diag-txt { font-size:12px;color:var(--text-2);line-height:1.8; }
+.scaleco-block { border:1px solid rgba(45,91,227,.25);border-radius:10px;padding:18px;background:rgba(45,91,227,.06);margin-bottom:10px; }
+.scaleco-intro { font-size:12px;color:var(--text-2);line-height:1.7;margin-bottom:12px; }
+.scaleco-intro strong { color:var(--text); }
+.scaleco-cta { display:flex;align-items:center;gap:12px;flex-wrap:wrap; }
+.scaleco-cta-text { font-size:13px;color:var(--text);font-weight:500; }
+.scaleco-cta-link { padding:7px 16px;background:var(--blue);color:#fff;border-radius:6px;font-family:var(--ff-head);font-size:13px;letter-spacing:.04em;text-decoration:none;white-space:nowrap; }
+
+@media (max-width:640px) {
+  .cockpit-inner { padding:24px 18px; }
+  .cform-row { grid-template-columns:1fr; }
+  .row-top,.row-mid,.row-act,.row-sup,.ctx-exec { grid-template-columns:1fr; }
+  .bant-grid { grid-template-columns:1fr 1fr; }
+}
+</style>
+
 <script>
-// Scroll reveal
+// ── SCROLL REVEAL
 const observer = new IntersectionObserver((entries) => {
-  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
 }, { threshold: 0.1 });
 document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// ── COCKPIT
+function openCockpit() {
+  document.getElementById('cockpit').style.display = 'block';
+  document.body.style.overflow = 'hidden';
+  document.getElementById('cockpitForm').style.display = 'block';
+  document.getElementById('cockpitLoading').style.display = 'none';
+  document.getElementById('cockpitResult').style.display = 'none';
+}
+function closeCockpit() {
+  document.getElementById('cockpit').style.display = 'none';
+  document.body.style.overflow = '';
+}
+// Também abre pelo nav
+document.querySelector('.nav-cta').onclick = function(e) { e.preventDefault(); openCockpit(); };
+
+// ── UTILS
+const loadingMsgs = ['Aplicando framework SCALE...','Auditando qualificação BANT...','Identificando gaps estruturais...','Calculando scorecard final...','Gerando diagnóstico comercial...'];
+let loadingInterval;
+function showError(msg) { const b=document.getElementById('errorBox'); b.textContent=msg; b.classList.add('visible'); }
+function hideError() { document.getElementById('errorBox').classList.remove('visible'); }
+function startLoading() {
+  document.getElementById('cockpitForm').style.display='none';
+  document.getElementById('cockpitLoading').style.display='block';
+  let i=0; document.getElementById('loadingMsg').textContent=loadingMsgs[0];
+  loadingInterval=setInterval(()=>{ i=(i+1)%loadingMsgs.length; document.getElementById('loadingMsg').textContent=loadingMsgs[i]; },2000);
+}
+function stopLoading() { clearInterval(loadingInterval); document.getElementById('cockpitLoading').style.display='none'; }
+function resetForm() {
+  document.getElementById('cockpitResult').style.display='none';
+  document.getElementById('cockpitForm').style.display='block';
+  hideError();
+}
+function barColor(n) { return n<=3?'var(--red)':n<=6?'#f5a623':'#3ddc84'; }
+function scoreGlow(n) { return n<=3?'rgba(224,60,60,.2)':n<=6?'rgba(245,166,35,.2)':'rgba(61,220,132,.2)'; }
+function scoreStroke(n) { return n<=3?'var(--red)':n<=6?'#f5a623':'#3ddc84'; }
+function pillClass(c) { const v=(c||'').toUpperCase(); if(v.includes('AVAN'))return'classif-avancou'; if(v.includes('NEUTR'))return'classif-neutra'; return'classif-piorou'; }
+function impactoClass(i) { const v=(i||'').toLowerCase(); if(v.includes('alt'))return'imp-alto'; if(v.includes('med'))return'imp-med'; return'imp-baixo'; }
+function listHTML(arr,cls) {
+  if(!arr||!arr.length) return '<div class="list-item"><div class="list-dot" style="background:#333"></div><span>Nenhum item.</span></div>';
+  return arr.map(t=>`<div class="list-item"><div class="list-dot ${cls}"></div><span>${t}</span></div>`).join('');
+}
+function gaugeHTML(score,color) {
+  const r=36,circ=2*Math.PI*r,dash=(score/10)*circ,gap=circ-dash;
+  return `<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="40" cy="40" r="${r}" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="5"/>
+    <circle cx="40" cy="40" r="${r}" fill="none" stroke="${color}" stroke-width="5"
+      stroke-dasharray="${dash} ${gap}" stroke-dashoffset="${circ*0.25}" stroke-linecap="round"/>
+  </svg>`;
+}
+function radarHTML(scores) {
+  const keys=['strategic','commercial','analytics','leadership','execution','governance'];
+  const labels=['S','C','A','L','E','G'];
+  const cx=100,cy=100,maxR=72,n=keys.length;
+  const angle=i=>(i*2*Math.PI/n)-Math.PI/2;
+  let grid='',axes='',lsvg='',dots='';
+  for(let ring=1;ring<=4;ring++){
+    const rr=(ring/4)*maxR;
+    const pts=Array.from({length:n},(_,i)=>{const a=angle(i);return`${cx+rr*Math.cos(a)},${cy+rr*Math.sin(a)}`;}).join(' ');
+    grid+=`<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>`;
+  }
+  for(let i=0;i<n;i++){const a=angle(i);axes+=`<line x1="${cx}" y1="${cy}" x2="${cx+maxR*Math.cos(a)}" y2="${cy+maxR*Math.sin(a)}" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>`;}
+  const pts=keys.map((k,i)=>{const v=((scores[k]?.nota||0)/10);const a=angle(i);return`${cx+v*maxR*Math.cos(a)},${cy+v*maxR*Math.sin(a)}`;}).join(' ');
+  for(let i=0;i<n;i++){const a=angle(i);const lx=cx+(maxR+14)*Math.cos(a),ly=cy+(maxR+14)*Math.sin(a);lsvg+=`<text x="${lx}" y="${ly}" text-anchor="middle" dominant-baseline="middle" font-family="DM Mono,monospace" font-size="9" fill="rgba(255,255,255,0.25)">${labels[i]}</text>`;}
+  keys.forEach((k,i)=>{const v=((scores[k]?.nota||0)/10);const a=angle(i);dots+=`<circle cx="${cx+v*maxR*Math.cos(a)}" cy="${cy+v*maxR*Math.sin(a)}" r="2.5" fill="#2D5BE3"/>`;});
+  return`<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">${grid}${axes}<polygon points="${pts}" fill="rgba(45,91,227,0.12)" stroke="#2D5BE3" stroke-width="1.5"/>${lsvg}${dots}</svg>`;
+}
+
+function renderResult(d) {
+  const score=d.score_geral||0;
+  const classif=(d.classificacao_call||'NEUTRA').toUpperCase();
+  const scaleKeys=['strategic','commercial','analytics','leadership','execution','governance'];
+  const scaleLabels={strategic:'Strategic',commercial:'Commercial',analytics:'Analytics',leadership:'Leadership',execution:'Execution',governance:'Governance'};
+  const bantKeys=['budget','authority','need','timing'];
+  const bantLabels={budget:'Budget',authority:'Authority',need:'Need',timing:'Timing'};
+  const now=new Date();
+  const ts=now.toLocaleDateString('pt-BR',{day:'2-digit',month:'long',year:'numeric'})+' · '+now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  const empresa=document.getElementById('empresa').value.trim()||'—';
+  const segmento=document.getElementById('segmento').value.trim()||'—';
+  const ticket=document.getElementById('ticket').value.trim()||'—';
+  const tipo=document.getElementById('tipo').value||'discovery';
+  const nome=document.getElementById('gNome').value.trim()||'—';
+
+  const bantAusentes=bantKeys.filter(k=>!(d.bant_score||{})[k]?.coberto);
+  const statusMsg=bantAusentes.length>0
+    ?`Deal em risco — ${bantAusentes.map(k=>({budget:'Budget',authority:'Authority',need:'Need',timing:'Timing'})[k]).join(', ')} não coberto${bantAusentes.length>1?'s':''}`
+    :'Qualificação completa — deal bem posicionado';
+  const statusIsRisk=bantAusentes.length>0;
+
+  const erros=(d.erros_criticos||[]).map((e,idx)=>{
+    const titulo=typeof e==='object'?e.titulo:e;
+    const impacto=typeof e==='object'?(e.impacto||'Alto'):'Alto';
+    const detalhe=typeof e==='object'?(e.detalhe||''):'';
+    const conseq=typeof e==='object'?(e.consequencia||''):'';
+    return`<div class="erro-item"><div class="erro-hdr"><span class="erro-rank">${idx+1}</span><span class="erro-titulo">${titulo}</span><span class="imp-badge ${impactoClass(impacto)}">${impacto.toUpperCase()}</span></div>${detalhe?`<div class="erro-det">${detalhe}</div>`:''} ${conseq?`<div class="erro-conseq"><span class="erro-conseq-label">Consequência:</span>${conseq}</div>`:''}</div>`;
+  }).join('');
+
+  const scaleBars=scaleKeys.map(k=>{const nota=(d.scale_score||{})[k]?.nota||0;return`<div class="s-row"><span class="s-key">${scaleLabels[k]}</span><div class="s-track"><div class="s-fill" style="width:${nota*10}%;background:${barColor(nota)}"></div></div><span class="s-nota">${nota}</span></div>`;}).join('');
+
+  const bantBlocks=bantKeys.map(k=>{const b=(d.bant_score||{})[k]||{};const ok=b.coberto===true;return`<div class="bant-b ${ok?'bant-ok':'bant-no'}"><div class="bant-big">${k[0].toUpperCase()}</div><div class="bant-name">${bantLabels[k]}</div><div class="bant-st">${ok?'✓ COBERTO':'✗ AUSENTE'}</div><div class="bant-desc">${b.analise||'—'}</div>${!ok&&b.impacto?`<div class="bant-impact"><span class="bant-impact-label">Impacto:</span>${b.impacto}</div>`:''}</div>`;}).join('');
+
+  document.getElementById('resultContent').innerHTML=`
+    <div class="ctx-exec">
+      <div class="ctx-col">
+        <div class="ctx-col-label">Call analisada</div>
+        <div class="ctx-deal-title">${empresa}</div>
+        <div class="ctx-deal-sub">${tipo.charAt(0).toUpperCase()+tipo.slice(1)} Call · ${ts}</div>
+        <div class="ctx-status" style="${!statusIsRisk?'background:rgba(61,220,132,.06);border-color:rgba(61,220,132,.18);color:#3ddc84':''}">
+          <div class="ctx-status-label" style="${!statusIsRisk?'color:rgba(61,220,132,.5)':''}">Status do deal</div>
+          ${statusMsg}
+        </div>
+      </div>
+      <div class="ctx-col">
+        <div class="ctx-col-label">Contexto</div>
+        <div class="ctx-meta-row">
+          <div class="ctx-meta-item"><strong>Ticket:</strong> ${ticket}</div>
+          <div class="ctx-meta-item"><strong>Segmento:</strong> ${segmento}</div>
+          <div class="ctx-meta-item"><strong>Vendedor:</strong> ${nome}</div>
+        </div>
+      </div>
+    </div>
+    <div class="row-top">
+      <div class="score-card" style="--score-glow:${scoreGlow(score)}">
+        <div class="score-lbl">Score geral</div>
+        <div class="gauge-wrap">${gaugeHTML(score,scoreStroke(score))}<div class="gauge-num"><span class="sn-big">${score}</span><span class="sn-den">/10</span></div></div>
+        <span class="classif-pill ${pillClass(classif)}">${classif}</span>
+        <div class="score-risco">Risco: ${score>=8?'BAIXO':score>=6?'MÉDIO':'ALTO'}</div>
+      </div>
+      <div class="insight-card-r">
+        <div class="ins-tag-r">Insight final</div>
+        <div class="ins-text-r">${d.insight_final||'—'}</div>
+      </div>
+    </div>
+    <div class="row-mid">
+      <div class="sec-card">
+        <div class="sec-lbl">SCALE Score</div>
+        <div class="radar-wrap-r">${radarHTML(d.scale_score||{})}</div>
+        <div class="s-bars">${scaleBars}</div>
+      </div>
+      <div class="sec-card">
+        <div class="sec-lbl">Qualificação BANT</div>
+        <div class="bant-grid">${bantBlocks}</div>
+      </div>
+    </div>
+    <div class="row-act">
+      <div class="sec-card">
+        <div class="sec-lbl">Erros críticos</div>
+        <div class="erros-list">${erros||'<div class="list-item"><div class="list-dot" style="background:#333"></div><span>Nenhum erro crítico.</span></div>'}</div>
+      </div>
+      <div class="pna-card">
+        <div class="pna-urgencia">Se você não fizer isso, o deal esfria.</div>
+        <div class="pna-tag">Próxima melhor ação</div>
+        <div class="pna-title">EXECUTE ISSO AGORA</div>
+        <div class="pna-txt">${d.proxima_melhor_acao||'—'}</div>
+        <div class="pna-dead">▸ Janela ideal: até 24h após a call</div>
+      </div>
+    </div>
+    <div class="row-sup">
+      <div class="sec-card">
+        <div class="sec-lbl">Pontos fortes</div>
+        <div class="list-items">${listHTML(d.pontos_fortes,'dot-g')}</div>
+      </div>
+      <div class="sec-card">
+        <div class="sec-lbl">Perguntas que faltaram</div>
+        <div class="list-items">${listHTML(d.perguntas_que_faltaram,'dot-b')}</div>
+      </div>
+    </div>
+    <div class="diag-card">
+      <div class="sec-lbl">Diagnóstico estrutural</div>
+      <div class="diag-txt">${d.diagnostico_estrutural||'—'}</div>
+    </div>
+    <div class="scaleco-block">
+      <div class="scaleco-intro"><strong>Essa análise mostra um padrão — não um evento isolado.</strong><br><br>Se esse tipo de call se repete, o problema não está no vendedor. Está na arquitetura comercial.<br><br>É exatamente isso que a ScaleCo resolve.</div>
+      <div class="scaleco-cta">
+        <div class="scaleco-cta-text">Quer entender o padrão por trás dos seus deals?</div>
+        <a class="scaleco-cta-link" href="https://wa.me/5511974270077" target="_blank">FALAR COM FÁBIO →</a>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('footerTs').textContent=`Call Diagnosis™ · Gerado em ${ts}`;
+  document.getElementById('cockpitResult').style.display='block';
+  document.getElementById('cockpit').scrollTop=0;
+}
+
+async function runAnalysis() {
+  hideError();
+  const nome=document.getElementById('gNome').value.trim();
+  const email=document.getElementById('gEmail').value.trim();
+  const empresaLead=document.getElementById('gEmpresaLead').value.trim();
+  const transcricao=document.getElementById('transcricao').value.trim();
+  if(!nome){showError('Informe seu nome.');return;}
+  if(!email||!email.includes('@')){showError('Informe um e-mail válido.');return;}
+  if(!empresaLead){showError('Informe o nome da sua empresa.');return;}
+  if(!transcricao||transcricao.length<80){showError('A transcrição parece muito curta.');return;}
+  startLoading();
+  try {
+    const resp=await fetch('/.netlify/functions/analyze-call',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        nome,email,empresaLead,
+        cargo:document.getElementById('gCargo').value.trim(),
+        empresa:document.getElementById('empresa').value.trim(),
+        segmento:document.getElementById('segmento').value.trim(),
+        ticket:document.getElementById('ticket').value.trim(),
+        tipo:document.getElementById('tipo').value,
+        transcricao
+      })
+    });
+    const data=await resp.json();
+    if(!resp.ok) throw new Error(data.error||`HTTP ${resp.status}`);
+    stopLoading();
+    renderResult(data);
+  } catch(e) {
+    stopLoading();
+    document.getElementById('cockpitForm').style.display='block';
+    showError('Erro na análise: '+e.message);
+  }
+}
 </script>
 </body>
 </html>
