@@ -980,7 +980,7 @@ function renderResult(d) {
       <div class="ctx-col">
         <div class="ctx-col-label">Call analisada</div>
         <div class="ctx-deal-title">${empresa}</div>
-        <div class="ctx-deal-sub">${tipo.charAt(0).toUpperCase()+tipo.slice(1)} Call · ${ts}</div>
+        <div class="ctx-deal-sub">${{'discovery':'Discovery','prospeccao':'Prospecção','fechamento':'Fechamento'}[tipo]||tipo} Call · ${ts}</div>
         <div class="ctx-status" style="${!statusIsRisk?'background:rgba(61,220,132,.06);border-color:rgba(61,220,132,.18);color:#3ddc84':''}">
           <div class="ctx-status-label" style="${!statusIsRisk?'color:rgba(61,220,132,.5)':''}">Status do deal</div>
           ${statusMsg}
@@ -1046,10 +1046,10 @@ function renderResult(d) {
       <div class="diag-txt">${d.diagnostico_estrutural||'—'}</div>
     </div>
     <div class="scaleco-block">
-      <div class="scaleco-intro"><strong>Essa análise mostra um padrão — não um evento isolado.</strong><br><br>Se esse tipo de call se repete, o problema não está no vendedor. Está na arquitetura comercial.<br><br>É exatamente isso que a ScaleCo resolve.</div>
+      <div class="scaleco-intro"><strong>Isso não é um evento.<br>É um padrão.</strong><br><br>Se esse tipo de call se repete, sua operação não está quebrando no vendedor.<br>Está quebrando na arquitetura.</div>
       <div class="scaleco-cta">
-        <div class="scaleco-cta-text">Quer entender o padrão por trás dos seus deals?</div>
-        <a class="scaleco-cta-link" href="https://wa.me/5511974270077" target="_blank">FALAR COM FÁBIO →</a>
+        <div class="scaleco-cta-text">Veja onde sua operação quebra.</div>
+        <a class="scaleco-cta-link" href="https://wa.me/5511974270077" target="_blank">FALAR COM A SCALECO →</a>
       </div>
     </div>
   `;
